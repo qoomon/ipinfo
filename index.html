@@ -77,10 +77,10 @@
 
         window.addEventListener('online', () => updateInfo(map, marker));
 
-        async function getIpInfo() {
+        async function getIpInfo(ip) {
           const providers = [
             {
-              url: 'https://api.ipbase.com/v2/info',
+              url: (ip) => `https://api.ipbase.com/v2/info${ip ? `?ip=${ip}`: ''}`,
               map: (body) => ({
                 ip: body.data.ip,
                 organization: body.data.connection.organization,
@@ -91,7 +91,7 @@
               }),
             },
             {
-              url: 'https://ipapi.co/json',
+              url: (ip) => `https://ipapi.co${ip ? `/${ip}`: ''}/json`,
               map: (body) => ({
                 ip: body.ip,
                 organization: body.org,
@@ -102,7 +102,7 @@
               }),
             },
             {
-              url: 'https://ipinfo.io/json',
+              url: (ip) => `https://ipinfo.io{ip ? `/${ip}`: ''}/json`,
               map: (body) => {
                 const [latitude, longitude] = body.loc.split(',').map(parseFloat);
                 return {
@@ -115,29 +115,18 @@
                 };
               },
             },
-            {
-              url: 'https://api.geoipapi.com/json',
-              map: (body) => ({
-                ip: body.ip,
-                organization: body.asn.name,
-                location: {
-                  latitude: body.location.latitude,
-                  longitude: body.location.longitude,
-                },
-              }),
-            },  
           ];
 
           for (const provider of providers) {
             try {
-              const response = await fetch(provider.url).then((res) => res.json());
-              console.info(`Fetched from ${provider.url}:`, response);
+              const response = await fetch(provider.url(ip)).then((res) => res.json());
+              console.info(`Fetched from ${provider.url(ip)}:`, response);
               return {
-                detailsUrl: provider.url,
+                detailsUrl: provider.url(ip),
                 ...provider.map(response),
               };
             } catch (error) {
-              console.info(`Error fetching from ${provider.url}:`, error);
+              console.info(`Error fetching from ${provider.url(ip)}:`, error);
             }
           }
 
@@ -145,7 +134,9 @@
         }
 
         async function updateInfo(map, marker) {
-            const ipInfo = await getIpInfo();
+            const ip = location.hash.slice(1);
+            
+            const ipInfo = await getIpInfo(ip);
             console.info('ipInfo:', ipInfo);
 
             const mapIframe = document.getElementById('map');
