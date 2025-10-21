@@ -102,7 +102,7 @@
               }),
             },
             {
-              url: (ip) => `https://ipinfo.io{ip ? `/${ip}`: ''}/json`,
+              url: (ip) => `https://ipinfo.io${ip ? `/${ip}`: ''}/json`,
               map: (body) => {
                 const [latitude, longitude] = body.loc.split(',').map(parseFloat);
                 return {
